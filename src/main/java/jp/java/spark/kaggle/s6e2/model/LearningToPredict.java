@@ -50,23 +50,25 @@ public class LearningToPredict implements Serializable {
                 .setOutputCol(featuresCol);
         stages.add(assembler);
 
+        // ★追加：ターゲットカラム（正解ラベル）が文字列型の場合、"_indexed" カラムを使用するよう切り替え
+        String actualLabelCol = targetCol;
+        if (trainDf.schema().apply(targetCol).dataType().equals(DataTypes.StringType)) {
+            actualLabelCol = targetCol + "_indexed";
+        }
+
         // 3. モデルの定義 (Random Forest)
         RandomForestClassifier rf = new RandomForestClassifier()
-                .setLabelCol(targetCol)
+                .setLabelCol(actualLabelCol) // ★変更: targetCol から actualLabelCol に変更
                 .setFeaturesCol(featuresCol)
                 .setPredictionCol(predictionCol);
-        // ここではまだ stages に rf を add しない (Pipeline にまとめて CV に渡すため)
 
         // 4. 前処理のみのパイプラインを作成
         Pipeline preprocessingPipeline = new Pipeline().setStages(stages.toArray(new PipelineStage[0]));
-
-        // 【重要】モデル単体ではなく、前処理+モデルを一つのパイプラインにする
-        // これにより CV 内で前処理も正しく分割実行される
         Pipeline wholePipeline = new Pipeline().setStages(new PipelineStage[] { preprocessingPipeline, rf });
 
         // 5. 評価器の設定
         MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
-                .setLabelCol(targetCol)
+                .setLabelCol(actualLabelCol) // ★変更: targetCol から actualLabelCol に変更
                 .setPredictionCol(predictionCol)
                 .setMetricName(metricName);
 

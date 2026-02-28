@@ -34,8 +34,7 @@ public class Main implements Serializable {
 
         // 予測
         Dataset<Row> predictions = model.transform(test_df)
-                .withColumnRenamed("prediction_label", TARGET); // 出力用にカラム名を元に戻す
-
+                .withColumnRenamed("prediction", TARGET); // ★ "prediction_label" を "prediction" に修正
         // 出力ファイル生成
         WriteOutputFile.writeCsv(predictions, OUTPUT_DIR_PATH);
         spark.stop();
