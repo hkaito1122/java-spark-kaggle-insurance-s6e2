@@ -15,7 +15,7 @@ public class WriteOutputFile implements Serializable {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter fomatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss");
         String dir = new String(now.format(fomatter));
-        String output_path = path + dir + "output";
+        String output_path = path + dir + "/output";
 
         Dataset<Row> submission = df.select(ID, TARGET);
 
