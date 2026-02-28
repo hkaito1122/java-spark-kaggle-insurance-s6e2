@@ -9,6 +9,9 @@ import org.apache.spark.sql.SparkSession;
 import jp.java.spark.kaggle.s6e2.model.LearningToPredict;
 import jp.java.spark.kaggle.s6e2.read.ReadInputFile;
 import jp.java.spark.kaggle.s6e2.write.WriteOutputFile;
+import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.ml.linalg.Vector;
 
 public class Main implements Serializable {
     final static String TRAIN_PATH = "/Users/hayashikaito/dev/java-spark-kaggle-insurance-s6e2/src/main/resources/input/train.csv";
@@ -30,13 +33,17 @@ public class Main implements Serializable {
         Dataset<Row> test_df = readInputFile.readCsv(spark, TEST_PATH);
 
         // 学習
-        Transformer model = LearningToPredict.learning(train_df, TARGET, FEATURE, "prediction", "accuracy");
-
+        Transformer model = LearningToPredict.learning(train_df, TARGET, FEATURE, "prediction", "areaUnderROC");
         // 予測
-        Dataset<Row> predictions = model.transform(test_df)
-                .withColumnRenamed("prediction", TARGET); // ★ "prediction_label" を "prediction" に修正
+        Dataset<Row> predictions = model.transform(test_df);
+        spark.udf().register("extract_prob", (UDF1<Vector, Double>) vector -> vector.apply(1), DataTypes.DoubleType);
+
+        // 作成した extract_prob 関数を使って id と確率カラムを選択
+        Dataset<Row> submission = predictions.selectExpr(
+                "id",
+                "extract_prob(probability) AS `" + TARGET + "`");
         // 出力ファイル生成
-        WriteOutputFile.writeCsv(predictions, OUTPUT_DIR_PATH);
+        WriteOutputFile.writeCsv(submission, OUTPUT_DIR_PATH);
         spark.stop();
 
     }
