@@ -72,9 +72,9 @@ public class LearningToPredict implements Serializable {
         // 5. パラメータグリッドの作成 (GBT用の強力なチューニング設定)
         // ローカルマシンのスペックに合わせて値は調整してください
         var paramGrid = new ParamGridBuilder()
-                .addGrid(gbt.maxIter(), new int[] { 50, 100 }) // 木の数（エポック数）
-                .addGrid(gbt.maxDepth(), new int[] { 4, 6 }) // 木の深さ（過学習制御）
-                .addGrid(gbt.stepSize(), new double[] { 0.1, 0.05 }) // 学習率
+                .addGrid(gbt.maxIter(), new int[] { 50 }) // 木の数（エポック数）
+                .addGrid(gbt.maxDepth(), new int[] { 4 }) // 木の深さ（過学習制御）
+                .addGrid(gbt.stepSize(), new double[] { 0.1 }) // 学習率
                 .build();
 
         // 6. CrossValidatorの設定
