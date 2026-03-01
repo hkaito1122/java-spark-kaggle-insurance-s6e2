@@ -1,0 +1,54 @@
+=========================================
+1. Schema Information
+=========================================
+root
+ |-- id: integer (nullable = true)
+ |-- Age: integer (nullable = true)
+ |-- Sex: integer (nullable = true)
+ |-- Chest pain type: integer (nullable = true)
+ |-- BP: integer (nullable = true)
+ |-- Cholesterol: integer (nullable = true)
+ |-- FBS over 120: integer (nullable = true)
+ |-- EKG results: integer (nullable = true)
+ |-- Max HR: integer (nullable = true)
+ |-- Exercise angina: integer (nullable = true)
+ |-- ST depression: double (nullable = true)
+ |-- Slope of ST: integer (nullable = true)
+ |-- Number of vessels fluro: integer (nullable = true)
+ |-- Thallium: integer (nullable = true)
+ |-- Heart Disease: string (nullable = true)
+
+=========================================
+2. Total Record Count
+=========================================
+Total count: 630000
+
+=========================================
+3. Null Counts per Column
+=========================================
+id null count: 0
+Age null count: 0
+Sex null count: 0
+Chest pain type null count: 0
+BP null count: 0
+Cholesterol null count: 0
+FBS over 120 null count: 0
+EKG results null count: 0
+Max HR null count: 0
+Exercise angina null count: 0
+ST depression null count: 0
+Slope of ST null count: 0
+Number of vessels fluro null count: 0
+Thallium null count: 0
+Heart Disease null count: 0
+
+=========================================
+4. Basic Statistics (Describe)
+=========================================
+| summary   | id                   | Age                 | Sex                  | Chest pain type      | BP                   | Cholesterol          | FBS over 120          | EKG results          | Max HR              | Exercise angina       | ST depression        | Slope of ST          | Number of vessels fluro   | Thallium             | Heart Disease   | 
+---------------------------------------------------------------------------------------------------------------------------------
+| count     | 630000               | 630000              | 630000               | 630000               | 630000               | 630000               | 630000                | 630000               | 630000              | 630000                | 630000               | 630000               | 630000                    | 630000               | 630000          | 
+| mean      | 314999.5             | 54.13670634920635   | 0.7147349206349206   | 3.312752380952381    | 130.49743333333333   | 245.01181428571428   | 0.07998730158730159   | 0.9816603174603175   | 152.8167634920635   | 0.2737253968253968    | 0.7160275555555125   | 1.4558714285714285   | 0.4510396825396825        | 4.618873015873016    | null            | 
+| stddev    | 181865.47913224186   | 8.256300848556213   | 0.4515409588217054   | 0.8516145940830931   | 14.975801969905213   | 33.6815811262914     | 0.2712737546846993    | 0.9987826724494833   | 19.11292655174958   | 0.44587007021543945   | 0.9484716953213221   | 0.5451917950270105   | 0.7985487398906809        | 1.9500074897578876   | null            | 
+| min       | 0                    | 29                  | 0                    | 1                    | 94                   | 126                  | 0                     | 0                    | 71                  | 0                     | 0.0                  | 1                    | 0                         | 3                    | Absence         | 
+| max       | 629999               | 77                  | 1                    | 4                    | 200                  | 564                  | 1                     | 2                    | 202                 | 1                     | 6.2                  | 3                    | 3                         | 7                    | Presence        | 

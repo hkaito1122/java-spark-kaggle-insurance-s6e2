@@ -8,6 +8,8 @@ import org.apache.spark.ml.Transformer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+
+import jp.java.spark.kaggle.s6e2.bi.ResearchData;
 import jp.java.spark.kaggle.s6e2.model.LearningToPredict;
 import jp.java.spark.kaggle.s6e2.read.ReadInputFile;
 import jp.java.spark.kaggle.s6e2.write.WriteOutputFile;
@@ -68,28 +70,34 @@ public class Main implements Serializable {
         // チェックポイントディレクトリを設定 (SparkContextに対して1回だけ)
         spark.sparkContext().setCheckpointDir(checkpointPath);
 
-        // ==========================================
-        // ★ モデルの学習
-        // ==========================================
-        Transformer model = LearningToPredict.learning(optimizedTrainDf, TARGET, FEATURE, "prediction", "areaUnderROC");
-
-        // 学習が終わったらTrainデータのメモリを解放
-        optimizedTrainDf.unpersist();
+        // bi
+        ResearchData.analyze(spark, optimizedTrainDf);
 
         // ==========================================
-        // ★ 予測とデータ出力
-        // ==========================================
-        Dataset<Row> predictions = model.transform(optimizedTestDf);
 
-        Dataset<Row> submission = predictions.selectExpr(
-                "id",
-                "extract_prob(probability) AS `" + TARGET + "`");
+        // // ==========================================
+        // // ★ モデルの学習
+        // // ==========================================
+        // Transformer model = LearningToPredict.learning(optimizedTrainDf, TARGET,
+        // FEATURE, "prediction", "areaUnderROC");
 
-        // 出力ファイル生成 (※ ここで初めて実際の予測計算が走ります！)
-        WriteOutputFile.writeCsv(submission, OUTPUT_DIR_PATH);
+        // // 学習が終わったらTrainデータのメモリを解放
+        // optimizedTrainDf.unpersist();
 
-        // ★リファクタ: Testデータのメモリ解放は、必ずアクション（出力）が「終わった後」に行う
-        optimizedTestDf.unpersist();
+        // // ==========================================
+        // // ★ 予測とデータ出力
+        // // ==========================================
+        // Dataset<Row> predictions = model.transform(optimizedTestDf);
+
+        // Dataset<Row> submission = predictions.selectExpr(
+        // "id",
+        // "extract_prob(probability) AS `" + TARGET + "`");
+
+        // // 出力ファイル生成 (※ ここで初めて実際の予測計算が走ります！)
+        // WriteOutputFile.writeCsv(submission, OUTPUT_DIR_PATH);
+
+        // // ★リファクタ: Testデータのメモリ解放は、必ずアクション（出力）が「終わった後」に行う
+        // optimizedTestDf.unpersist();
 
         spark.stop();
     }
