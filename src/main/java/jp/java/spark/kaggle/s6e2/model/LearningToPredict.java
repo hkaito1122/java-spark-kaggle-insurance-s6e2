@@ -17,50 +17,18 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 
 public class LearningToPredict implements Serializable {
 
-    public static CrossValidatorModel learning(Dataset<Row> trainDf, String targetCol,
+    public static CrossValidatorModel learning(Dataset<Row> optimizedTrainDf, String targetCol,
             String featuresCol, String predictionCol, String metricName) {
 
-        // ==========================================
-        // ★ 提案1 & 2: パーティション最適化とキャッシュ (persist)
-        // ==========================================
-        // M4チップのコア数（8〜10コア）をフル活用するため、データを8分割して並列度を上げる
-        // さらに .cache() を呼ぶことで、CV（40回の学習）のたびにCSVを読み直すのを防ぐ
-        Dataset<Row> optimizedTrainDf = trainDf.repartition(8).cache();
-
-        // ==========================================
-        // ★ 提案3: チェックポイントディレクトリの設定
-        // ==========================================
-        // GBTの処理系譜（Lineage）をディスクに定期保存し、メモリパンクと計算遅延を防ぐ
-        String checkpointPath = "tmp/spark-checkpoints";
-
-        try {
-            // Sparkの裏側で動いているHadoopのファイルシステムAPIを取得
-            FileSystem fs = FileSystem.get(trainDf.sparkSession().sparkContext().hadoopConfiguration());
-            Path path = new Path(checkpointPath);
-
-            // ディレクトリが既に存在していれば、中身ごと削除（第2引数 true で再帰的削除）
-            if (fs.exists(path)) {
-                fs.delete(path, true);
-                System.out.println("Previous checkpoint directory cleaned up.");
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to clean up checkpoint directory: " + e.getMessage());
-        }
-
-        // クリーンな状態でチェックポイントディレクトリを再設定
-        optimizedTrainDf.sparkSession().sparkContext().setCheckpointDir(checkpointPath);
-
         // 1. 前処理ステージの作成
-        List<PipelineStage> stages = createStringIndexerStages(trainDf);
+        List<PipelineStage> stages = createStringIndexerStages(optimizedTrainDf);
 
         // 2. 特徴量カラムの選定
         List<String> featureCols = new ArrayList<>();
-        for (StructField field : trainDf.schema().fields()) {
+        for (StructField field : optimizedTrainDf.schema().fields()) {
             String name = field.name();
             if (!name.equals(targetCol) && !name.equals("id")) {
                 if (field.dataType().equals(DataTypes.StringType)) {
@@ -78,7 +46,7 @@ public class LearningToPredict implements Serializable {
 
         // ★追加：ターゲットカラム（正解ラベル）が文字列型の場合、"_indexed" カラムを使用するよう切り替え
         String actualLabelCol = targetCol;
-        if (trainDf.schema().apply(targetCol).dataType().equals(DataTypes.StringType)) {
+        if (optimizedTrainDf.schema().apply(targetCol).dataType().equals(DataTypes.StringType)) {
             actualLabelCol = targetCol + "_indexed";
         }
 
@@ -115,19 +83,13 @@ public class LearningToPredict implements Serializable {
                 .setEvaluator(evaluator)
                 .setEstimatorParamMaps(paramGrid)
                 .setNumFolds(5)
-                .setParallelism(6);
+                .setParallelism(3);
 
         System.out.println("Starting Cross Validation (Optimizing for " + metricName + ")...");
-        CrossValidatorModel cvModel = cv.fit(trainDf);
-
-        // ==========================================
-        // ★ 提案5: メモリの解放
-        // ==========================================
-        // 学習が終わったら、確保していた16GBの貴重なメモリスペースを解放する
-        optimizedTrainDf.unpersist();
+        CrossValidatorModel cvModel = cv.fit(optimizedTrainDf);
 
         // 7. 性能評価の出力
-        double score = evaluator.evaluate(cvModel.transform(trainDf));
+        double score = evaluator.evaluate(cvModel.transform(optimizedTrainDf));
         System.out.println("CV Training Result (" + metricName + "): " + score);
 
         return cvModel;
